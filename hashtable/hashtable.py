@@ -1,3 +1,7 @@
+import sys
+sys.path.append('../hashtable/linked_list')
+from linked_list import LinkedList
+
 class HashTableEntry:
     """
     Linked List hash table key/value pair
@@ -23,7 +27,7 @@ class HashTable:
     def __init__(self, capacity):
         # Your code here
         self.capacity = capacity
-        self.data = [None] * capacity 
+        self.storage = [LinkedList()] * MIN_CAPACITY
         self.count = 0
 
 
@@ -91,15 +95,17 @@ class HashTable:
         Implement this.
         """
         # Your code here
-        index = self.hash_index(key)
-        hst = HashTableEntry(key, value)
-        node = self.data[index]
+        slot = self.hash_index(key)
+        current = self.storage[slot].head
 
-        if node is not None:
-            self.data[index] = hst
-            self.data[index].next = node
-        else:
-            self.data[index] = hst
+        while current:
+            if current.key == key:
+                current.value = value
+            current = current.next
+        
+        entry = HashTableEntry(key, value)
+        self.storage[slot].insert_at_head(entry)
+        self.count +=1
 
     def delete(self, key):
         """
@@ -110,22 +116,8 @@ class HashTable:
         Implement this.
         """
         # Your code here
-        index = self.hash_index(key)
-        node = self.data[index]
-        prev = None
-
-        if node.key == key:
-            self.data[index] = node.next
-            return
-
-        while node != None:
-            if node.key == key:
-                prev.next = node.next
-                self.data[index].next = None
-                return
-            prev = node
-            node = node.next
-        return
+        self.put(key, None)
+        self.count -= 1    
 
 
     def get(self, key):
@@ -137,15 +129,15 @@ class HashTable:
         Implement this.
         """
         # Your code here
-        index = self.hash_index(key)
-        node = self.data[index]
+        slot = self.hash_index(key)
+        current = self.storage[slot].head
 
-        if node is not None:
-            while node:
-                if node.key == key:
-                    return node.value
-                node = node.next
-        return node
+        
+        while current:
+            if current.key == key:
+                return current.value
+            current = current.next
+        return None
 
 
     def resize(self, new_capacity):
@@ -156,7 +148,15 @@ class HashTable:
         Implement this.
         """
         # Your code here
-        
+        if self.get_load_factor() > 0.7:
+            old_storage = self.storage
+            self.storage = [LinkedList()] * new_capacity
+            for item in old_storage:
+                current = item.head
+                while current:
+                    self.put(current.key, current.value)
+                    current = current.next
+            self.capacity = new_capacity
 
 
 
